@@ -27,11 +27,25 @@ async def get_channels_adapter():
     else:
         return response.status_code, response.text
 
+
 async def get_channel_info(channel_id):
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{BACKEND_URL}/api/v1/user/get-chanel-info?channel_id={channel_id}")
+        response = await client.get(
+            f"{BACKEND_URL}/api/v1/user/get-chanel-info?channel_id={channel_id}"
+        )
     if response.status_code == 200:
         channel = response.json()
         return channel
+    else:
+        return response.status_code, response.text
+
+
+async def get_link_active_adapter(link_id):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{BACKEND_URL}/api/v1/user/link-stat-active?link_id={link_id}"
+        )
+    if response.status_code == 200:
+        return response.json()
     else:
         return response.status_code, response.text

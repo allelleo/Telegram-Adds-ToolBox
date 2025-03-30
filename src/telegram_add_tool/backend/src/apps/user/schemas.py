@@ -39,6 +39,7 @@ class SetUserRegistrationDto(BaseModel):
     user_id: int
     message: str
 
+
 class BaseDateDto(BaseModel):
     year: int
     month: int
@@ -47,9 +48,11 @@ class BaseDateDto(BaseModel):
     minute: int
     second: int
 
+
 class UserStatusDto(BaseModel):
     telegram_id: int
     date: None | BaseDateDto
+
 
 class UserListStatusDto(BaseModel):
     data: list[UserStatusDto]

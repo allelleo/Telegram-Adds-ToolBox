@@ -21,7 +21,6 @@ class UserActivityStatusOrm(BaseAbstractOrmModel):
     user = fields.ForeignKeyField("models.UserOrm")
 
 
-
 class InviteLinksOrm(BaseAbstractOrmModel):
     link: str = fields.CharField(max_length=255)
     creator_id: int = fields.BigIntField()
