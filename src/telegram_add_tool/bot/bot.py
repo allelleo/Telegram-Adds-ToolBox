@@ -1,10 +1,13 @@
 import os
 from urllib.parse import unquote
 
+from aiogram.filters import Command
+
+from src.telegram_add_tool.bot.adapter import check_user_access
 from src.telegram_add_tool.bot.config import TOKEN, BACKEND_URL
 
 from aiogram import Bot, Dispatcher
-from aiogram.types import ChatMemberUpdated, File
+from aiogram.types import ChatMemberUpdated, File, Message
 import httpx
 
 DOWNLOAD_DIR = "downloads"  # Папка для загрузки
@@ -52,3 +55,16 @@ async def track_new_members(event: ChatMemberUpdated):
     print(
         f"User: {"@" + user.username if user.username else user.first_name + " " + user.last_name} : {user_action} : {event.invite_link}"
     )
+
+@dp.message(Command("panel"))
+async def panel(message: Message):
+    user_telegram_id = message.from_user.id
+    result = await check_user_access(user_id=user_telegram_id)
+    if isinstance(result, bool):
+        await message.answer("No access")
+
+    if isinstance(result, tuple):
+        await bot.send_message(chat_id=-4780015746, text=f"""[bot] Ошибка проерки доступа\ncode: {result[0]}\ntext: {result[1]}\n@allelleo""")
+
+    if isinstance(result, str):
+        await message.answer(f"Hello, {result}!")
