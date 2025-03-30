@@ -27,3 +27,28 @@ poetry run aerich downgrade
 poetry run aerich history
 poetry run aerich heads
 ```
+
+
+### Запуск
+```commandline
+poetry sync
+```
+#### Backend
+```commandline
+uvicorn src.telegram_add_tool.backend.app:app
+```
+
+#### Bot
+```commandline
+poetry run python3.12 bot.py
+```
+
+#### Avatars
+```commandline
+poetry run python3.12 src/telegram_add_tool/user_avatar_date_module/app.py
+```
+
+#### RegDate
+```commandline
+poetry run python3.12 src/telegram_add_tool/user_created_account/app.py
+```

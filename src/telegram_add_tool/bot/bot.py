@@ -13,33 +13,22 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 
-
 @dp.chat_member()
 async def track_new_members(event: ChatMemberUpdated):
     user = event.from_user
-    user_photos = await bot.get_user_profile_photos(user_id=user.id)
-
-    for photo in user_photos.photos:
-        largest = max(photo, key=lambda x: x.file_size)
-        file: File = await bot.get_file(largest.file_id)
-
-        # Получаем путь к файлу
-        file_path = file.file_path
-        file_bytes = await bot.download_file(file_path)
-
-        # Используем оригинальное имя, которое Telegram использует в file_path
-        # Обычно путь такой: photos/file_123.jpg или profile_photos/photo_2025-03-28_12-49-19.jpg
-        # Забираем только имя файла с расширением
-        filename = os.path.basename(unquote(file_path))
-        filepath = os.path.join(DOWNLOAD_DIR, filename)
-
-        with open(filepath, "wb") as f:
-            f.write(file_bytes.read())
-
-        print(f"Сохранено фото: {filepath}")
-
-    # Остальной код, отправка в backend
     user_action = event.new_chat_member.status
+
+    # ✅ Если пользователь вступил (а не вышел)
+    if user_action == "member":
+        try:
+            await bot.send_message(
+                chat_id=user.id,
+                text=f"Привет, {user.first_name}! 👋 Спасибо за подписку на канал!"
+            )
+        except Exception as e:
+            print(f"❌ Не удалось отправить сообщение пользователю @{user.username}: {e}")
+
+    # 🔄 Логика отправки в backend
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{BACKEND_URL}/api/v1/user/new_action",

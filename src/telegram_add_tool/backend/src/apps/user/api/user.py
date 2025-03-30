@@ -1,7 +1,10 @@
 import os
+from datetime import datetime
 
 from aiogram import Bot
 from fastapi import APIRouter, Request
+from starlette.responses import JSONResponse
+from tortoise.transactions import in_transaction
 
 from src.telegram_add_tool.backend.src.apps.user.models import (
     UserOrm,
@@ -9,10 +12,14 @@ from src.telegram_add_tool.backend.src.apps.user.models import (
     InviteLinksOrm,
     ChannelsOrm,
 )
-from src.telegram_add_tool.backend.src.apps.user.schemas import NewActionDto
+from src.telegram_add_tool.backend.src.apps.user.schemas import (
+    NewActionDto,
+    SetUserFirstAvatarDto, SetUserRegistrationDto,
+)
 
 main_user_api = APIRouter(prefix="/user")
 token = os.getenv("bot_token")
+
 
 @main_user_api.get("/")
 async def index():
@@ -100,3 +107,69 @@ async def new_action(request: Request, data: NewActionDto):
     else:
         await UserActionHistoryOrm.create(user=user, channel=channel, action="leave")
         await user.save()
+
+
+@main_user_api.post("/set-user-first-avatar")
+async def set_user_first_avatar(request: Request, data: SetUserFirstAvatarDto):
+    print(data)
+    user = await UserOrm.get(username=data.user)
+    user.photo_date = datetime(
+        year=data.year,
+        month=data.month,
+        day=data.day,
+        hour=data.hour,
+        minute=data.minute,
+        second=data.second,
+    )
+    await user.save()
+    return JSONResponse(status_code=200, content={})
+
+
+@main_user_api.get("/get-user-for-check-avatar")
+async def get_user_for_check_avatar():
+    async with in_transaction() as conn:
+        query = """
+            SELECT * FROM userorm
+            WHERE username IS NOT NULL AND photo_date IS NULL
+            ORDER BY RANDOM()
+            LIMIT 1
+        """
+        results = await UserOrm.raw(query)
+        if not results:
+            return JSONResponse(status_code=404, content={"detail": "No user found"})
+
+        user = results[0]
+        return JSONResponse(
+            status_code=200,
+            content={
+                "username": user.username.replace("@", "") if user.username else ""
+            },
+        )
+
+@main_user_api.post('/set-user-registration-date')
+async def set_user_registration_date(request: Request, data: SetUserRegistrationDto):
+    user = await UserOrm.get(telegram_id=data.user_id)
+    user.registration_message = data.message
+    await user.save()
+    return JSONResponse(status_code=200, content={})
+
+@main_user_api.get("/get-user-for-check-registration-date")
+async def get_user_for_check_registration_date():
+    async with in_transaction() as conn:
+        query = """
+            SELECT * FROM userorm
+            WHERE registration_message IS NULL
+            ORDER BY RANDOM()
+            LIMIT 1
+        """
+        results = await UserOrm.raw(query)
+        if not results:
+            return JSONResponse(status_code=404, content={"detail": "No user found"})
+
+        user = results[0]
+        return JSONResponse(
+            status_code=200,
+            content={
+                "user_id": user.telegram_id,
+            },
+        )

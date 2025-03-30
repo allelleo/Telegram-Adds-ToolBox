@@ -40,3 +40,5 @@ class UserOrm(BaseAbstractOrmModel):
     is_premium: bool = fields.BooleanField(default=False)
     used_links = fields.ManyToManyField("models.InviteLinksOrm", related_name="users")
     photo_date = fields.DatetimeField(null=True)
+    registration_message = fields.CharField(max_length=500, null=True)
+    registration_date = fields.CharField(max_length=500, null=True)

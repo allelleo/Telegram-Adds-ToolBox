@@ -23,3 +23,17 @@ class NewActionDto(BaseModel):
     link: InviteLinkDto | None
     action: Literal["enter", "leave"]
     channel_id: int
+
+
+class SetUserFirstAvatarDto(BaseModel):
+    year: int
+    month: int
+    day: int
+    hour: int
+    minute: int
+    second: int
+    user: str
+
+class SetUserRegistrationDto(BaseModel):
+    user_id: int
+    message: str

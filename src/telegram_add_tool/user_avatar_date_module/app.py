@@ -2,37 +2,65 @@ import asyncio
 import os
 from datetime import datetime
 
+from aiogram import Bot
 from dotenv import load_dotenv
 from telethon import TelegramClient
 import httpx
 
 load_dotenv()
+token = os.getenv("bot_token")
 
-API_ID = os.getenv('api_id')
-API_HASH = os.getenv('api_hash')
-BACKEND_URL = os.getenv('backend_url')
+API_ID = os.getenv("api_id")
+API_HASH = os.getenv("api_hash")
+BACKEND_URL = os.getenv("backend_url")
 
-type username = str
+type t_username = str
 
-async def get_user(session_name: str) -> username:
+
+async def get_user() -> t_username:
     """Можно адаптировать под разные аккаунты"""
-    return 'allelleo'  # Для примера — одинаковый юзернейм
+    async with httpx.AsyncClient() as client:
+        response = await client.get(
+            f"{BACKEND_URL}/api/v1/user/get-user-for-check-avatar"
+        )
+    if response.status_code == 200:
+        response = response.json()
+        username = response["username"]
+        return username
+    elif response.status_code == 404:
+        await asyncio.sleep(10)
+        return await get_user()
+    else:
+        bot = Bot(token=token)
+        message = f"Ошибка получения юзернейма\nstatus: {response.status_code}\ntext: {response.text}\n@allelleo"
+        await bot.send_message(chat_id=-4780015746, text=message)
+        await asyncio.sleep(5)
+        return await get_user()
 
-async def call_backend(year: int, month: int, day: int, hour: int, minute: int, second: int, user: str):
+
+async def call_backend(
+    year: int, month: int, day: int, hour: int, minute: int, second: int, user: str
+):
     """Пример вызова backend — подставьте свою логику"""
-    print(f"[BACKEND] Calling backend with time: {year}-{month}-{day} {hour}:{minute}:{second}")
+    print(
+        f"[BACKEND] Calling backend with time: {year}-{month}-{day} {hour}:{minute}:{second}"
+    )
     # Пример: отправка через httpx
     async with httpx.AsyncClient() as client:
-        response = await client.post(f"{BACKEND_URL}/set-user-first-avatar", json={
-            "year": year,
-            "month": month,
-            "day": day,
-            "hour": hour,
-            "minute": minute,
-            "second": second,
-            "user": user
-        })
+        response = await client.post(
+            f"{BACKEND_URL}/api/v1/user/set-user-first-avatar",
+            json={
+                "year": year,
+                "month": month,
+                "day": day,
+                "hour": hour,
+                "minute": minute,
+                "second": second,
+                "user": user,
+            },
+        )
         print(f"[BACKEND] Response: {response.status_code} - {response.text}")
+
 
 async def worker(session_name: str):
     os.makedirs("downloads", exist_ok=True)
@@ -40,14 +68,14 @@ async def worker(session_name: str):
     client = TelegramClient(session_name, API_ID, API_HASH)
     await client.start()
 
-    user = await get_user(session_name)
+    user = await get_user()
     photos = await client.get_profile_photos(user)
 
     filepaths = []
     for photo in photos:
         dt = photo.date
         filename = dt.strftime("photo_%Y-%m-%d_%H-%M-%S") + ".jpg"
-        filepath = os.path.join("downloads",session_name, filename)
+        filepath = os.path.join("downloads", session_name, filename)
 
         await client.download_media(photo, file=filepath)
         print(f"[{session_name}] ✅ Скачано: {filepath}")
@@ -74,13 +102,16 @@ async def worker(session_name: str):
             hour=file_times[0].hour,
             minute=file_times[0].minute,
             second=file_times[0].second,
-            user=user
+            user=user,
         )
+    await client.disconnect()
+
 
 async def main():
     # Имена сессий
-    sessions = ["user_avatar_1", "user_avatar_2", "user_avatar_3"]
-    await asyncio.gather(*(worker(session) for session in sessions))
+    while True:
+        await worker(session_name="user_avatar_1")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     asyncio.run(main())
