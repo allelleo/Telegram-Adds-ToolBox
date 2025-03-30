@@ -10,7 +10,7 @@ from src.telegram_add_tool.backend.src.apps.user.models import (
     UserOrm,
     UserActionHistoryOrm,
     InviteLinksOrm,
-    ChannelsOrm,
+    ChannelsOrm, BotUserAccessOrm,
 )
 from src.telegram_add_tool.backend.src.apps.user.schemas import (
     NewActionDto,
@@ -173,3 +173,14 @@ async def get_user_for_check_registration_date():
                 "user_id": user.telegram_id,
             },
         )
+
+@main_user_api.get('/check-user-access')
+async def check_user_access(request: Request, telegram_id: int):
+    user = await BotUserAccessOrm.get_or_none(telegram_id=telegram_id)
+    if user is None:
+        return JSONResponse(status_code=404, content={"detail": "No user found"})
+
+    return JSONResponse(status_code=200, content={
+        "user_id": user.telegram_id,
+        "name": user.name
+    })
