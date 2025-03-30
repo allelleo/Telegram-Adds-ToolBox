@@ -1,13 +1,17 @@
 import os
-from urllib.parse import unquote
+from aiogram.filters import Command, CommandObject
 
-from aiogram.filters import Command
-
-from src.telegram_add_tool.bot.adapter import check_user_access
+from src.telegram_add_tool.bot.adapter import check_user_access, get_channels_adapter, get_channel_info
 from src.telegram_add_tool.bot.config import TOKEN, BACKEND_URL
 
-from aiogram import Bot, Dispatcher
-from aiogram.types import ChatMemberUpdated, File, Message
+from aiogram import Bot, Dispatcher, F
+from aiogram.types import (
+    ChatMemberUpdated,
+    File,
+    Message,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup, CallbackQuery,
+)
 import httpx
 
 DOWNLOAD_DIR = "downloads"  # Папка для загрузки
@@ -15,6 +19,7 @@ os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
+
 
 @dp.chat_member()
 async def track_new_members(event: ChatMemberUpdated):
@@ -56,15 +61,90 @@ async def track_new_members(event: ChatMemberUpdated):
         f"User: {"@" + user.username if user.username else user.first_name + " " + user.last_name} : {user_action} : {event.invite_link}"
     )
 
+
 @dp.message(Command("panel"))
 async def panel(message: Message):
     user_telegram_id = message.from_user.id
     result = await check_user_access(user_id=user_telegram_id)
     if isinstance(result, bool):
-        await message.answer("No access")
+        await message.reply("No access")
 
     if isinstance(result, tuple):
-        await bot.send_message(chat_id=-4780015746, text=f"""[bot] Ошибка проерки доступа\ncode: {result[0]}\ntext: {result[1]}\n@allelleo""")
+        await bot.send_message(
+            chat_id=-4780015746,
+            text=f"""[bot] Ошибка проверки доступа\ncode: {result[0]}\ntext: {result[1]}\n@allelleo""",
+        )
+        return
 
     if isinstance(result, str):
-        await message.answer(f"Hello, {result}!")
+        await message.reply(
+            f"Hello, {result}!",
+            reply_markup=InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [
+                        InlineKeyboardButton(text="Channels", callback_data="get_channels"),
+                    ],
+                ]
+            ),
+        )
+
+@dp.callback_query(F.data == 'get_channels')
+async def get_channels(callback: CallbackQuery):
+    user_telegram_id = callback.from_user.id
+    result = await check_user_access(user_id=user_telegram_id)
+    if isinstance(result, bool):
+        await callback.message.answer("No access")
+        return
+    if isinstance(result, tuple):
+        await bot.send_message(
+            chat_id=-4780015746,
+            text=f"""[bot] Ошибка проверки доступа\ncode: {result[0]}\ntext: {result[1]}\n@allelleo""",
+        )
+        return
+
+    channels = await get_channels_adapter()
+    if len(channels) == 0:
+        await callback.message.answer("No channels")
+        return
+
+    msg = '''Вот список всех каналов:\n\n'''
+    for channel in channels:
+        msg += f"[{channel['id']}] : {channel['title']}\n"
+    msg += '\n\nВернуться обратно - /panel'
+    await callback.message.edit_text(msg)
+
+@dp.message(Command('channel'))
+async def get_channel(message: Message, command: CommandObject):
+    user_telegram_id = message.from_user.id
+    result = await check_user_access(user_id=user_telegram_id)
+    if isinstance(result, bool):
+        await message.reply("No access")
+
+    if isinstance(result, tuple):
+        await bot.send_message(
+            chat_id=-4780015746,
+            text=f"""[bot] Ошибка проверки доступа\ncode: {result[0]}\ntext: {result[1]}\n@allelleo""",
+        )
+        return
+
+    channel = await get_channel_info(int(command.args))
+    msg = f"Канал: {channel['channel']['title']}\nID: {channel['channel']['channel_id']}\n\nСсылки: {len(channel['links'])}\n\nСписок ссылок:\n"
+    for link in channel['links']:
+        msg += f"[{link['id']}] : {link['link'][0:25]}\n"
+    msg += f"\n\nСуммарно действий: {channel['actions']}\nОтследили юзеров: {channel['users']}"
+
+    await message.reply(msg)
+
+@dp.message(Command("channel_users"))
+async def get_channel_users(message: Message, command: CommandObject):
+    user_telegram_id = message.from_user.id
+    result = await check_user_access(user_id=user_telegram_id)
+    if isinstance(result, bool):
+        await message.reply("No access")
+
+    if isinstance(result, tuple):
+        await bot.send_message(
+            chat_id=-4780015746,
+            text=f"""[bot] Ошибка проверки доступа\ncode: {result[0]}\ntext: {result[1]}\n@allelleo""",
+        )
+        return

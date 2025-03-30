@@ -12,7 +12,7 @@ API_HASH = os.getenv("api_hash")
 BACKEND_URL = os.getenv("backend_url")
 token = os.getenv("bot_token")
 
-BOT_USERNAME = os.getenv('check_reg_date')
+BOT_USERNAME = os.getenv("check_reg_date")
 
 type t_user_id = int
 
@@ -20,7 +20,9 @@ type t_user_id = int
 async def get_user() -> t_user_id:
 
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{BACKEND_URL}/api/v1/user/get-user-for-check-registration-date")
+        response = await client.get(
+            f"{BACKEND_URL}/api/v1/user/get-user-for-check-registration-date"
+        )
     if response.status_code == 200:
         print(response.json())
         return int(response.json()["user_id"])
@@ -29,8 +31,10 @@ async def get_user() -> t_user_id:
         return await get_user()
     else:
         bot = Bot(token=token)
-        await bot.send_message(chat_id=-4780015746,
-                               text=f"Ошибка получения user_id\nstatus: {response.status_code}\ntext: {response.text}\n@allelleo")
+        await bot.send_message(
+            chat_id=-4780015746,
+            text=f"Ошибка получения user_id\nstatus: {response.status_code}\ntext: {response.text}\n@allelleo",
+        )
         await asyncio.sleep(5)
         return await get_user()
 
@@ -39,7 +43,7 @@ async def call_backend(user_id: int, response_text: str):
     async with httpx.AsyncClient() as client:
         response = await client.post(
             f"{BACKEND_URL}/api/v1/user/set-user-registration-date",
-            json={"user_id": user_id, "message": response_text}
+            json={"user_id": user_id, "message": response_text},
         )
         print(f"[BACKEND] Ответ: {response.status_code} - {response.text}")
 
@@ -74,7 +78,7 @@ async def worker(session_name: str):
 
 async def main():
     while True:
-        await worker("regdate_session")
+        await worker("sessions/regdate_session")
 
 
 if __name__ == "__main__":

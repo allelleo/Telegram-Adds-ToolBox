@@ -52,3 +52,15 @@ poetry run python3.12 src/telegram_add_tool/user_avatar_date_module/app.py
 ```commandline
 poetry run python3.12 src/telegram_add_tool/user_created_account/app.py
 ```
+
+#### UsStatus
+```commandline
+poetry run python3.12 src/telegram_add_tool/activity_checker/app.py
+```
+
+## Bot commands
+- `/panel` Основная панель
+- `/channel {channel_id}` - Информация по каналу
+- `/channel_users {channel_id}` - Информация обо всех юзерах которых отследили в канале
+- `/link {link_id}` - Информация по юзерам которые пришли по ссылке
+- `/link_t {raw_link}` - Информация по юзерам которые перешли по ссылке

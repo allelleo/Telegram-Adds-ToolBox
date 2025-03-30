@@ -16,3 +16,22 @@ async def check_user_access(user_id: int):
             return False
         else:
             return response.status_code, response.text
+
+
+async def get_channels_adapter():
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{BACKEND_URL}/api/v1/user/channels")
+    if response.status_code == 200:
+        channels = response.json()
+        return channels
+    else:
+        return response.status_code, response.text
+
+async def get_channel_info(channel_id):
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{BACKEND_URL}/api/v1/user/get-chanel-info?channel_id={channel_id}")
+    if response.status_code == 200:
+        channel = response.json()
+        return channel
+    else:
+        return response.status_code, response.text

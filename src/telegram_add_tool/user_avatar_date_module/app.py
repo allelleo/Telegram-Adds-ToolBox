@@ -110,7 +110,7 @@ async def worker(session_name: str):
 async def main():
     # Имена сессий
     while True:
-        await worker(session_name="user_avatar_1")
+        await worker(session_name="sessions/user_avatar_1")
 
 
 if __name__ == "__main__":

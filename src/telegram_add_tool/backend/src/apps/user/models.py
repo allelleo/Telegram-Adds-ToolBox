@@ -4,9 +4,11 @@ from src.telegram_add_tool.backend.src.core.abstract_orm_model import (
 
 from tortoise import fields
 
+
 class BotUserAccessOrm(BaseAbstractOrmModel):
     telegram_id: int = fields.BigIntField()
     name: str = fields.CharField(max_length=255)
+
 
 class ChannelsOrm(BaseAbstractOrmModel):
     title: str = fields.CharField(max_length=255)
@@ -15,6 +17,9 @@ class ChannelsOrm(BaseAbstractOrmModel):
 
 class UserActivityStatusOrm(BaseAbstractOrmModel):
     status: str = fields.CharField(max_length=255)
+    timestamp: int = fields.DatetimeField()
+    user = fields.ForeignKeyField("models.UserOrm")
+
 
 
 class InviteLinksOrm(BaseAbstractOrmModel):

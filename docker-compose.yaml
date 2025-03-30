@@ -1,0 +1,44 @@
+version: '3.9'
+
+services:
+  backend:
+    build: .
+    command: uvicorn src.telegram_add_tool.backend.app:app --host 0.0.0.0 --port 8000
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+
+  bot:
+    build: .
+    command: poetry run python3.12 bot.py
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+
+  avatar:
+    build: .
+    command: poetry run python3.12 src/telegram_add_tool/user_avatar_date_module/app.py
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+
+  regdate:
+    build: .
+    command: poetry run python3.12 src/telegram_add_tool/user_created_account/app.py
+    env_file:
+      - .env
+    volumes:
+      - .:/app
+
+  usstatus:
+    build: .
+    command: poetry run python3.12 src/telegram_add_tool/activity_checker/app.py
+    env_file:
+      - .env
+    volumes:
+      - .:/app
