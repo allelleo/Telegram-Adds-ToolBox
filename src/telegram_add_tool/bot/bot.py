@@ -18,16 +18,6 @@ async def track_new_members(event: ChatMemberUpdated):
     user = event.from_user
     user_action = event.new_chat_member.status
 
-    # ✅ Если пользователь вступил (а не вышел)
-    if user_action == "member":
-        try:
-            await bot.send_message(
-                chat_id=user.id,
-                text=f"Привет, {user.first_name}! 👋 Спасибо за подписку на канал!"
-            )
-        except Exception as e:
-            print(f"❌ Не удалось отправить сообщение пользователю @{user.username}: {e}")
-
     # 🔄 Логика отправки в backend
     async with httpx.AsyncClient() as client:
         response = await client.post(
